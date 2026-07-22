@@ -386,6 +386,8 @@ with st.sidebar:
     # ── Email settings ────────────────────────────────────────────────────────
     st.subheader("📧 Email Settings")
     to_emails = st.text_area("To (comma-separated)", value="")
+    smtp_user = SENDER_EMAIL
+    smtp_pass = SENDER_PASSWORD
     subject   = st.text_input("Subject", value="QA Certification Report: {}".format(fix_version))
 
     st.divider()
