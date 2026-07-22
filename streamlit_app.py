@@ -48,14 +48,10 @@ CONFIG_FILE  = os.path.join(os.path.expanduser("~"), ".qa_report_config.json")
 SCRIPT_DIR   = os.path.dirname(os.path.abspath(__file__))
 
 def load_config():
-    if os.path.exists(CONFIG_FILE):
-        with open(CONFIG_FILE, "r") as f:
-            return json.load(f)
     return {"presets_dir": SCRIPT_DIR}
 
 def save_config(cfg):
-    with open(CONFIG_FILE, "w") as f:
-        json.dump(cfg, f, indent=2)
+    pass  # no-op on cloud; path setting is local-only
 
 _cfg = load_config()
 PRESETS_FILE = os.path.join(_cfg["presets_dir"], "presets.json")
@@ -101,21 +97,33 @@ EXAMPLE_PRESET_JSON = [
 
 # ── Preset helpers ────────────────────────────────────────────────────────────
 def get_presets_file():
-    """Always resolve from current config so path changes take effect."""
-    return os.path.join(load_config()["presets_dir"], "presets.json")
+    return PRESETS_FILE
 
 def load_presets():
-    pf = get_presets_file()
-    if os.path.exists(pf):
-        with open(pf, "r") as f:
-            return json.load(f)
-    return []
+    # Runtime: use session state cache so edits survive reruns
+    if "_presets_cache" in st.session_state:
+        return st.session_state["_presets_cache"]
+    # First load: read from repo file
+    if os.path.exists(PRESETS_FILE):
+        with open(PRESETS_FILE, "r") as f:
+            data = json.load(f)
+    else:
+        data = []
+    st.session_state["_presets_cache"] = data
+    return data
 
 def save_presets(presets):
-    pf = get_presets_file()
-    os.makedirs(os.path.dirname(pf), exist_ok=True)
-    with open(pf, "w") as f:
-        json.dump(presets, f, indent=2)
+    # Always update session state cache
+    st.session_state["_presets_cache"] = presets
+    # Also write to disk if writable (local dev)
+    try:
+        with open(PRESETS_FILE, "w") as f:
+            json.dump(presets, f, indent=2)
+    except OSError:
+        pass  # read-only on Streamlit Cloud — session state is the store
+
+def export_presets_json():
+    return json.dumps(load_presets(), indent=2)
 
 def apply_version(text, version):
     return text.replace("{version}", version)
@@ -296,19 +304,32 @@ with st.sidebar:
     st.header("⚙️ Configuration")
 
     # ── Storage path ─────────────────────────────────────────────────────────
-    with st.expander("📁 Presets Storage Location"):
-        current_cfg = load_config()
-        current_dir = current_cfg.get("presets_dir", SCRIPT_DIR)
-        st.caption("Presets are saved to `presets.json` in this folder.")
-        new_dir = st.text_input("Folder path", value=current_dir, key="presets_dir_input")
-        if st.button("💾 Save Path", use_container_width=True):
-            if os.path.isdir(new_dir):
-                save_config({"presets_dir": new_dir})
-                st.success("Path saved: {}".format(new_dir))
-                st.rerun()
-            else:
-                st.error("Folder does not exist: {}".format(new_dir))
-        st.info("Current: `{}`".format(current_dir))
+    with st.expander("📁 Presets Storage"):
+        st.info("Presets are stored in session memory on Streamlit Cloud. Use **Export Presets** to save them locally and **Import** to restore after a restart.")
+        col_exp, col_imp = st.columns(2)
+        with col_exp:
+            st.download_button(
+                "⬇ Export Presets",
+                data=export_presets_json(),
+                file_name="presets.json",
+                mime="application/json",
+                use_container_width=True,
+                help="Download your saved presets to keep them permanently"
+            )
+        with col_imp:
+            up_presets = st.file_uploader("Import presets.json", type="json", key="preset_uploader",
+                                          label_visibility="collapsed")
+            if up_presets:
+                try:
+                    imported = json.load(up_presets)
+                    if isinstance(imported, list):
+                        save_presets(imported)
+                        st.success("Presets imported: {}".format(len(imported)))
+                        st.rerun()
+                    else:
+                        st.error("Must be a list of preset objects.")
+                except Exception as e:
+                    st.error(str(e))
     st.divider()
 
     # ── Email output style toggle ─────────────────────────────────────────────
