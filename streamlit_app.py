@@ -148,7 +148,7 @@ for k, v in defaults.items():
 # ── Jira / data helpers ───────────────────────────────────────────────────────
 @st.cache_resource
 def get_jira():
-    return JIRA(server=JIRA_SERVER, basic_auth=(JIRA_USERNAME, JIRA_API_TOKEN))
+    return JIRA(server=JIRA_BASE_URL, basic_auth=(JIRA_USERNAME, JIRA_API_TOKEN))
 
 def fetch_issues(jql):
     try:
@@ -171,7 +171,7 @@ def build_rows(issues, headers):
     by_assignee = dict(sorted(by_assignee.items(), key=lambda x: (x[0] == "Unassigned", x[0])))
     col_map = {
         "s.no":       lambda i, iss: str(i),
-        "jira id":    lambda i, iss: '<a href="{}/browse/{}">{}</a>'.format(JIRA_SERVER, iss.key, iss.key),
+        "jira id":    lambda i, iss: '<a href="{}/browse/{}">{}</a>'.format(JIRA_BASE_URL, iss.key, iss.key),
         "summary":    lambda i, iss: iss.fields.summary,
         "issue type": lambda i, iss: iss.fields.issuetype.name,
         "status":     lambda i, iss: iss.fields.status.name,
@@ -366,8 +366,6 @@ with st.sidebar:
     # ── Email settings ────────────────────────────────────────────────────────
     st.subheader("📧 Email Settings")
     to_emails = st.text_area("To (comma-separated)", value="")
-    smtp_user = st.text_input("SMTP Username", value=SENDER_EMAIL)
-    smtp_pass = st.text_input("SMTP Password", value=SENDER_PASSWORD, type="password")
     subject   = st.text_input("Subject", value="QA Certification Report: {}".format(fix_version))
 
     st.divider()
