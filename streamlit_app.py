@@ -16,6 +16,35 @@ def _secret(key: str) -> str:
 
 st.set_page_config(page_title="QA Certification Report", page_icon="📋", layout="wide")
 
+# ── Password gate ─────────────────────────────────────────────────────────────
+def check_password():
+    if st.session_state.get("authenticated"):
+        return
+    st.markdown(
+        """<style>
+        [data-testid="stAppViewContainer"]{background:#f0f4fb;}
+        .login-wrap{max-width:360px;margin:100px auto;background:#fff;
+            padding:40px;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,.12);}
+        </style>""",
+        unsafe_allow_html=True,
+    )
+    with st.container():
+        st.markdown('<div class="login-wrap">', unsafe_allow_html=True)
+        st.markdown("#### 🔒 QA Certification Report")
+        st.caption("Enter the password to access the dashboard.")
+        pwd = st.text_input("Password", type="password", placeholder="Password",
+                            label_visibility="collapsed", key="_pwd")
+        if st.button("Login", type="primary", use_container_width=True):
+            if pwd == st.secrets.get("APP_PASSWORD", ""):
+                st.session_state.authenticated = True
+                st.rerun()
+            else:
+                st.error("Incorrect password.")
+        st.markdown("</div>", unsafe_allow_html=True)
+    st.stop()
+
+check_password()
+
 JIRA_BASE_URL    = _secret("JIRA_BASE_URL")
 JIRA_USERNAME    = _secret("JIRA_USERNAME")
 JIRA_API_TOKEN   = _secret("JIRA_API_TOKEN")
