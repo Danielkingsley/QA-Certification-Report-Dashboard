@@ -164,7 +164,7 @@ defaults = {
     ],
     "html_preview": "",
     "email_content": {},
-    "email_style": "Styled",
+    "email_style": "Plain",
     "greeting": "Hi All,",
     "intro": f"The QA team has completed regression testing and certifies the <b>{datetime.now().strftime('%B %Y')}</b> release in the S1 environment.",
     "footer": "Best regards,<br>QA Team",
