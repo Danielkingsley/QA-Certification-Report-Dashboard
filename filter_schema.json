@@ -1,0 +1,26 @@
+[
+  {
+    "label": "Prod Testing",
+    "jql": "fixVersion = 9.3 and labels in (PROD_Testing)",
+    "headers": "S.No,Jira ID,Summary,Issue Type,Status,Assignee",
+    "section_title": "Tickets marked for Prod_Testing:"
+  },
+  {
+    "label": "Stage Testing",
+    "jql": "fixVersion = 9.3 and labels in (MAB_Stage_Regression)",
+    "headers": "S.No,Jira ID,Summary,Issue Type,Status,Assignee",
+    "section_title": "Below tickets are marked for Stage Testing:"
+  },
+  {
+    "label": "All QA Issues",
+    "jql": "fixVersion = 9.3 and labels not in (MAB_Stage_Regression, PROD_Testing)",
+    "headers": "S.No,Jira ID,Summary,Issue Type,Status,Assignee",
+    "section_title": "Below tickets are all QA issues for the release:"
+  },
+  {
+    "label": "No QA",
+    "jql": "fixVersion = 9.3 and labels in (no_qa)",
+    "headers": "S.No,Jira ID,Summary,Issue Type,Status,Assignee",
+    "section_title": "Below tickets are marked as NO_QA for the release:"
+  }
+]
