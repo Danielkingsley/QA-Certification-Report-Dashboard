@@ -540,7 +540,7 @@ if st.button("🚀 Generate Report", type="primary", use_container_width=True):
 # ── Preview + Send ────────────────────────────────────────────────────────────
 if st.session_state.html_preview:
     st.subheader("📬 Email Preview")
-    st.iframe(st.session_state.html_preview, height=720, scrolling=True)
+    st.components.v1.html(st.session_state.html_preview, height=720, scrolling=True)
     st.divider()
     col_send, col_dl = st.columns(2)
     with col_send:
