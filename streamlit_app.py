@@ -185,8 +185,12 @@ def fetch_issues(jql):
         issues, start = [], 0
         batch = 50
         while True:
-            chunk = jira.search_issues(jql, startAt=start, maxResults=batch,
-                                       fields="summary,status,issuetype,assignee,priority,project,labels")
+           chunk = jira.enhanced_search_issues(
+                jql,
+                startAt=start,
+                maxResults=batch,
+                fields="summary,status,issuetype,assignee,priority,project,labels"
+            )
             issues.extend(chunk)
             start += len(chunk)
             if len(chunk) < batch:
