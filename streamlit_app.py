@@ -185,7 +185,7 @@ def fetch_issues(jql):
         issues, start = [], 0
         batch = 50
         while True:
-           chunk = jira.enhanced_search_issues(
+            chunk = jira.enhanced_search_issues(
                 jql,
                 startAt=start,
                 maxResults=batch,
