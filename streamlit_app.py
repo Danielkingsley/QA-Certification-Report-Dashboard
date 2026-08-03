@@ -313,6 +313,7 @@ def build_html(greeting, intro, filters_data, footer, fix_version, current_month
 # ═══════════════════════════════════════════════════════════════════════════════
 with st.sidebar:
     st.header("⚙️ Configuration")
+    st.info("Clears all session state immediately, freeing memory for that session. Useful after sending the report — you're done, no need to keep all that data in memory")
     if st.button("🔓 Logout", use_container_width=True):
         st.session_state.clear()
         st.rerun()
