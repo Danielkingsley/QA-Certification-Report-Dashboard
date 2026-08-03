@@ -174,15 +174,26 @@ for k, v in defaults.items():
         st.session_state[k] = v
 
 # ── Jira / data helpers ───────────────────────────────────────────────────────
-@st.cache_resource
+@st.cache_resource(ttl=3600, max_entries=1)
 def get_jira():
-    return JIRA(server=JIRA_BASE_URL, basic_auth=(JIRA_USERNAME, JIRA_API_TOKEN))
+    return JIRA(server=JIRA_BASE_URL, basic_auth=(JIRA_USERNAME, JIRA_API_TOKEN),
+                max_retries=1, options={"verify": True})
 
 def fetch_issues(jql):
     try:
-        return get_jira().enhanced_search_issues(jql, maxResults=False)
+        jira = get_jira()
+        issues, start = [], 0
+        batch = 50
+        while True:
+            chunk = jira.search_issues(jql, startAt=start, maxResults=batch,
+                                       fields="summary,status,issuetype,assignee,priority,project,labels")
+            issues.extend(chunk)
+            start += len(chunk)
+            if len(chunk) < batch:
+                break
+        return issues
     except Exception as e:
-        st.error(f"Jira error: {e}")
+        st.error("Jira error: {}".format(e))
         return []
 
 COL_WIDTHS = {"s.no": "4%", "jira id": "8%", "summary": "42%", "issue type": "10%",
@@ -302,6 +313,10 @@ def build_html(greeting, intro, filters_data, footer, fix_version, current_month
 # ═══════════════════════════════════════════════════════════════════════════════
 with st.sidebar:
     st.header("⚙️ Configuration")
+    if st.button("🔓 Logout", use_container_width=True):
+        st.session_state.clear()
+        st.rerun()
+    st.divider()
 
     # ── Storage path ─────────────────────────────────────────────────────────
     with st.expander("📁 Presets Storage"):
@@ -550,7 +565,7 @@ if st.button("🚀 Generate Report", type="primary", use_container_width=True):
 
     styled = st.session_state.email_style == "Styled"
     html = build_html(greeting, intro, filters_data, footer, fix_version, current_month, styled=styled)
-    st.session_state.html_preview = html
+    st.session_state.html_preview = html[:500_000] if len(html) > 500_000 else html  # cap at 500KB
     st.session_state.email_content = {
         "html": html, "subject": subject,
         "to": [e.strip() for e in to_emails.split(",") if e.strip()],
