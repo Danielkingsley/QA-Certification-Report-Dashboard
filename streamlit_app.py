@@ -182,20 +182,21 @@ def get_jira():
 def fetch_issues(jql):
     try:
         jira = get_jira()
-        issues, start = [], 0
-        batch = 50
+        all_issues, next_token = [], None
         while True:
-            chunk = jira.enhanced_search_issues(
-                jql,
-                startAt=start,
-                maxResults=batch,
-                fields="summary,status,issuetype,assignee,priority,project,labels"
-            )
-            issues.extend(chunk)
-            start += len(chunk)
-            if len(chunk) < batch:
+            kwargs = {
+                "jql_str": jql,
+                "maxResults": 100,
+                "fields": "summary,status,issuetype,assignee,priority,project,labels",
+            }
+            if next_token:
+                kwargs["nextPageToken"] = next_token
+            result = jira.enhanced_search_issues(**kwargs)
+            all_issues.extend(result)
+            next_token = getattr(result, "nextPageToken", None)
+            if not next_token:
                 break
-        return issues
+        return all_issues
     except Exception as e:
         st.error("Jira error: {}".format(e))
         return []
